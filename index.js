@@ -39,7 +39,7 @@ async function connectDB() {
 }
 
 
-//Getting userdata from the browser in the Joi format so that there is noSQL injection 
+// Getting userdata from the browser in the Joi format so that there is noSQL injection 
 const signUpSchema = Joi.object({
     name: Joi.string().alphanum().min(3).max(30).required(),
     email: Joi.string().email().required(),
@@ -49,6 +49,12 @@ const signUpSchema = Joi.object({
 const loginSchema = Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().required() // We don't need min(8) here, just check if it's provided
+});
+
+// 
+const updateUserRole = Joi.object({
+    userName: Joi.string().alphanum().min(3).max(30).required(),
+    isPromote: Joi.bool().required()
 });
 
 
@@ -69,6 +75,8 @@ app.use(session({
 
 // Middleware to parse URL-encoded bodies (as sent by HTML forms)
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
 
 // Serve static files so the UI can actually load the image via URL
 app.use(express.static('public'));
@@ -244,58 +252,95 @@ app.post('/loginSubmit', async (req, res) => {
     }
 });
 
-const users = [{
-    name: "Varshini",
-    email: "varshini@gmail.com",
-    role: "user"
-}, {
-    name: "Krish",
-    email: "krish@gmail.com",
-    role: "admin"
-}, {
-    name: "Nava",
-    email: "nava@gmail.com",
-    role: "user"
-}, {
-    name: "Sundari",
-    email: "sundari@gmail.com",
-    role: "user"
-}, {
-    name: "Babu",
-    email: "babu@gmail.com",
-    role: "user"
-}, {
-    name: "Kaushikh",
-    email: "kaushikh@gmail.com",
-    role: "admin"
-}, {
-    name: "Surriya",
-    email: "surriya@gmail.com",
-    role: "admin"
-}, {
-    name: "Swetha",
-    email: "swetha@gmail.com",
-    role: "user"
-}, {
-    name: " Surya",
-    email: "Surya@gmail.com",
-    role: "admin"
-}, {
-    name: "Abu",
-    email: "abu@gmail.com",
-    role: "admin"
-}];
+// const users = [{
+//     name: "Varshini",
+//     email: "varshini@gmail.com",
+//     role: "user"
+// }, {
+//     name: "Krish",
+//     email: "krish@gmail.com",
+//     role: "admin"
+// }, {
+//     name: "Nava",
+//     email: "nava@gmail.com",
+//     role: "user"
+// }, {
+//     name: "Sundari",
+//     email: "sundari@gmail.com",
+//     role: "user"
+// }, {
+//     name: "Babu",
+//     email: "babu@gmail.com",
+//     role: "user"
+// }, {
+//     name: "Kaushikh",
+//     email: "kaushikh@gmail.com",
+//     role: "admin"
+// }, {
+//     name: "Surriya",
+//     email: "surriya@gmail.com",
+//     role: "admin"
+// }, {
+//     name: "Swetha",
+//     email: "swetha@gmail.com",
+//     role: "user"
+// }, {
+//     name: " Surya",
+//     email: "Surya@gmail.com",
+//     role: "admin"
+// }, {
+//     name: "Abu",
+//     email: "abu@gmail.com",
+//     role: "admin"
+// }];
 
-app.get('/admin', (req, res) => {
-    if (!req.session.userName) {
-        return res.redirect("/");
-    }
-    if (req.session.isAdmin) {
-        return res.render('admin', { users, page: "admin" });
-    } else {
-        return res.status(403).send("403 - Not Authorized");
+app.get('/admin', async (req, res) => {
+    try {
+        // Check if the user is Authenticated
+        if (!req.session.userName) {
+            return res.redirect("/");
+        }
+        // Check if the user is Authorized
+        if (req.session.isAdmin) {
+            // 1 Get users from database
+            const users = await usersCollection.find({}).toArray();
+            return res.render('admin', { users, page: "admin" });
+        } else {
+            return res.status(403).send("403 - Not Authorized");
+        }
+    } catch (err) {
+        console.log(err);
     }
 });
+
+app.patch('/user/role', async (req, res) => {
+    try {
+        // check if authenticated
+        if (!req.session.userName) {
+            return res.redirect("/");
+        }
+        // Check if authorized as Admin
+        if (req.session.isAdmin) {
+            // Get the user who need to be made admin from form
+            const { userName, isPromote } = updateUserRole.validate(req.body).value;
+            // Get users from database
+            const updateRes = await usersCollection.updateOne(
+                { name: userName },
+                { $set: { isAdmin: isPromote } },
+            );
+            if (updateRes.matchedCount <= 0) {
+                return res.status(404).send("User not found");
+            } else {
+                return res.status(200).send("Updated successfullty");
+            }
+        } else {
+            return res.status(403).send("403 - Not Authorized");
+        }
+    } catch (err) {
+        console.log(err);
+    }
+});
+
 
 app.use((req, res) => {
     res.status(404);

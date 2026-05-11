@@ -4,11 +4,11 @@
 
     <% for(let i=0; i < users.length; i++) { %>
         <div class="container-fluid d-flex flex-row align-items-center gap-3 mt-5 w-50">
-            <p class="text-center mt-0 mb-0 flex-fill flex-wrap">
-                <%= users[i].name %>
-            </p>
-            <a href=""><button class="btn btn-success flex-fill"> Promote to Admin </button></a>
-            <a href=""> <button class="btn btn-danger flex-fill mx-auto px-6 me-5"> Demote to User</button></a>
+                <p id="userName" class="text-center mt-0 mb-0 flex-fill flex-wrap">
+                    <%= users[i].name %> (<%= users[i].isAdmin ? 'Admin' : 'User' %>)
+                </p>
+                <button class="btn btn-success flex-fill" onClick="updateUserRole(true)"> Promote to Admin </button>
+                <button class="btn btn-danger flex-fill mx-auto px-6 me-5" onClick="updateUserRole(false)"> Demote to User</button>
         </div>
         <% } %>
             <br><br><br>
