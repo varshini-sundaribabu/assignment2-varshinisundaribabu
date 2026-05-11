@@ -53,7 +53,7 @@ const loginSchema = Joi.object({
 
 // 
 const updateUserRole = Joi.object({
-    userName: Joi.string().alphanum().min(3).max(30).required(),
+    email: Joi.string().email().required(),
     isPromote: Joi.bool().required()
 });
 
@@ -190,8 +190,6 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/loginSubmit', async (req, res) => {
-    console.log(req.body);
-
     const validationRes = loginSchema.validate(req.body);
     // console.log(validationRes);
 
@@ -221,7 +219,6 @@ app.post('/loginSubmit', async (req, res) => {
                 // 2. Compare the password with the hashed password in DB
                 // Use compare method to compare the hashed password with plain one (comes in post request)
                 const validPassword = await bcrypt.compare(password, user.password);
-                console.log(validPassword);
                 if (!validPassword) {
                     return res.status(400).send('Invalid email or password.');
                 }
@@ -322,10 +319,10 @@ app.patch('/user/role', async (req, res) => {
         // Check if authorized as Admin
         if (req.session.isAdmin) {
             // Get the user who need to be made admin from form
-            const { userName, isPromote } = updateUserRole.validate(req.body).value;
+            const { email, isPromote } = updateUserRole.validate(req.body).value;
             // Get users from database
             const updateRes = await usersCollection.updateOne(
-                { name: userName },
+                { email },
                 { $set: { isAdmin: isPromote } },
             );
             if (updateRes.matchedCount <= 0) {

@@ -7,8 +7,8 @@
                 <p id="userName" class="text-center mt-0 mb-0 flex-fill flex-wrap">
                     <%= users[i].name %> (<%= users[i].isAdmin ? 'Admin' : 'User' %>)
                 </p>
-                <button class="btn btn-success flex-fill" onClick="updateUserRole(true)"> Promote to Admin </button>
-                <button class="btn btn-danger flex-fill mx-auto px-6 me-5" onClick="updateUserRole(false)"> Demote to User</button>
+                <button class="btn btn-success flex-fill" onClick="updateUserRole(true, '<%= users[i].email %>')"> Promote to Admin </button>
+                <button class="btn btn-danger flex-fill mx-auto px-6 me-5" onClick="updateUserRole(false, '<%= users[i].email %>')"> Demote to User</button>
         </div>
         <% } %>
             <br><br><br>
